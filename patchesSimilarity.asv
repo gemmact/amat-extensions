@@ -69,9 +69,8 @@ function firstPoint(fh,~)
             l = 1;
             for k = 2.^(0:2)
                 patchSize = P/k;
-                for i = x1:patchSize:x2-patchSize+1
-                    for j = y1:patchSize:y2-patchSize+1
-                        
+                for i = x1:x2-patchSize+1
+                    for j = y1:y2-patchSize+1
                         h1(4*l-3, :) = createHistogram(ii1, i, j, patchSize);
                         h1(4*l-2, :) = createHistogram(ii2, i, j, patchSize);
                         h1(4*l-1, :) = createHistogram(ii3, i, j, patchSize);
@@ -125,17 +124,16 @@ function changePoint(fh,~)
             h2 = zeros(84, B);
             %h2 = zeros(4,B);
             l = 1;
-            for k = 2.^(0:2)
+            for k = 2.^(0:1)
                 patchSize = P/k;
-                for i = x1:patchSize:x2-patchSize+1
-                    for j = y1:patchSize:y2-patchSize+1
-                        
+                for i = x1:x2-patchSize+1
+                    for j = y1:y2-patchSize+1
                         h2(4*l-3, :) = createHistogram(ii1, i, j, patchSize);
                         h2(4*l-2, :) = createHistogram(ii2, i, j, patchSize);
                         h2(4*l-1, :) = createHistogram(ii3, i, j, patchSize);
                         h2(4*l, :) = createHistogram(ii4, i, j, patchSize);
-                        l = l + 1;
-                        
+                        l = l + 1
+                        size(h2)
                     end
                 end
             end
@@ -151,7 +149,10 @@ function changePoint(fh,~)
                 %f2 = patchEncoding(binImage(second_patch, B), 'hist-normalized', B);
                 
                 
+
+
                 dist = histogramDistance(h1/norm(h1), h2/norm(h2), 'chi2');
+                size(dist)
                 
                 
                 w1 = 0.125*ones(1,4);
@@ -159,6 +160,6 @@ function changePoint(fh,~)
                 w3 = 0.003125*ones(1,64);
                 
                 %h = 1- sum(dist)/length(dist)
-                h = 1 - w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84)
+                h = 1 - w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84);
         end
 end
