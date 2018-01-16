@@ -8,7 +8,9 @@ B = 32;
 global h1
 
 im = imread(im);
-im = rgb2labNormalized(im);
+imLab = rgb2labNormalized(im);
+
+
 
 
 [H,W,C] = size(im);
@@ -21,9 +23,9 @@ set(fh, 'WindowButtonMotionFcn', @changePoint);
 
 global ii1 ii2 ii3 ii4
 
-ii1 = prepareHistogram(im(:, :, 1), B);
-ii2 = prepareHistogram(im(:, :, 2), B);
-ii3 = prepareHistogram(im(:, :, 3), B);
+ii1 = prepareHistogram(imLab(:, :, 1), B);
+ii2 = prepareHistogram(imLab(:, :, 2), B);
+ii3 = prepareHistogram(imLab(:, :, 3), B);
 
 img = rgb2gray(im2double(im)); 
 texture = textonMap(img, B);
@@ -44,7 +46,9 @@ function firstPoint(fh,~)
         RI = imref2d(size(im));
         RI.XWorldLimits = [0 H];
         RI.YWorldLimits = [0 W];
-        fh = figure(1); imshow(im, RI, 'InitialMagnification', 'fit');
+        fh = figure(1); 
+        %subplot(6, 3, [1 7])
+        imshow(im, RI, 'InitialMagnification', 'fit');
         
         
         P = 32; %patchsize
@@ -57,8 +61,9 @@ function firstPoint(fh,~)
             
             rectangle('Position', [x1, y1, P, P], 'EdgeColor', 'r');
 
-            h1 = zeros(84, B);
-            for k = 2.^(0:2)
+            %h1 = zeros(84, B);
+            h1 = zeros(4,B);
+            for k = 2.^(0:0)
                 patchSize = P/k;
                 for i = x1:x2-patchSize+1
                     for j = y1:y2-patchSize+1
@@ -73,7 +78,10 @@ function firstPoint(fh,~)
         end
             
                    
-            %reference_patch = im((x1-patchSize/2 : x1 + patchSize/2), (y1-patchSize/2 : y1 + patchSize/2), :)
+            %reference_patch = im((x1 : x2), (y1 : y2), :)
+            %figure(1)
+            %subplot(6,3,10)
+            %imshow(reference_patch)
             %im((x1-patchSize/2 : x1 + patchSize/2), (y1-patchSize/2 : y1 + patchSize/2), :) = zeros(patchSize+1, patchSize+1, 3);
             %figure(2)
 
@@ -107,8 +115,9 @@ function changePoint(fh,~)
             
             %r = rectangle('Position', [x1, y1, P, P]);
             
-            h2 = zeros(84, B);
-            for k = 2.^(0:2)
+            %h2 = zeros(84, B);
+            h2 = zeros(4,B);
+            for k = 2.^(0:0)
                 patchSize = P/k;
                 for i = x1:x2-patchSize+1
                     for j = y1:y2-patchSize+1
@@ -132,10 +141,14 @@ function changePoint(fh,~)
                 
 
 
-                dist = histogramDistance(h1/norm(h1), h2/norm(h2), 'chi2');
+                dist = histogramDistance(h1/norm(h1), h2/norm(h2), 'chi2')
                 
                 
+                %w1 = 0.125*ones(1,4);
+                %w2 = 0.075*ones(1,4);
+                %w3 = 0.05*ones(1,4);
                 
+                h = 1- sum(dist)/length(dist)
+                %h = w1.*dist(1:4) + w2.*dist(5:8) + w3.*dist(9:12)
         end
 end
-

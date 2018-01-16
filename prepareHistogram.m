@@ -3,7 +3,7 @@ function ii = prepareHistogram(im, B)
 
 [H, W, C] = size(im);
 
-w = ceil(255/B);
+w = (1/B);
 ii = zeros(H, W, B);
 ii(:, :, 1) = cumsum(cumsum(im == 0), 2);
 for j = 1:B
