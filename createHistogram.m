@@ -8,7 +8,7 @@ function h = createHistogram(ii, x1, y1, P)
     
     h = zeros(1, B);
     for i = 1:B
-        h(i) = ii(x2, y2, i) + ii(x1, y1, i) - ii(x1, y2, i) - ii(x2, y1, i);
+        h(i) = ii(y2, x2, i) + ii(y1, x1, i) - ii(y1, x2, i) - ii(y2, x1, i);
     end
     
     %h = h/(P*P);

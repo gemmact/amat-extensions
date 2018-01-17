@@ -5,19 +5,23 @@ global B
 patchSize = 32;
 B = 32;
 
-global h1
+global h1 x1ref y1ref
 
 im = imread(im);
 imLab = rgb2labNormalized(im);
 
+x1ref = -32;
+y1ref = -32;
 
 
 
 [H,W,C] = size(im);
 RI = imref2d(size(im));
-RI.XWorldLimits = [0 H];
-RI.YWorldLimits = [0 W];
-fh = figure(1); imshow(im, RI, 'InitialMagnification', 'fit');
+RI.XWorldLimits = [1 W];
+RI.YWorldLimits = [1 H];
+fh = figure(1); 
+subplot(3,6,[1 15])
+imshow(im, RI, 'InitialMagnification', 'fit');
 set(fh, 'WindowButtonDownFcn', @firstPoint);
 set(fh, 'WindowButtonMotionFcn', @changePoint);
 
@@ -36,7 +40,7 @@ ii4 = prepareHistogram(texture, B);
 end
 
 function firstPoint(fh,~)
-        global h1 B ii1 ii2 ii3 ii4
+        global h1 B ii1 ii2 ii3 ii4 x1ref y1ref
         im = imread('9170.jpg');
         [H,W,C] = size(im);
         
@@ -44,23 +48,28 @@ function firstPoint(fh,~)
         y = round(fh.CurrentAxes.CurrentPoint(1,2));
         
         RI = imref2d(size(im));
-        RI.XWorldLimits = [0 H];
-        RI.YWorldLimits = [0 W];
-        fh = figure(1); 
-        %subplot(6, 3, [1 7])
+        RI.XWorldLimits = [1 W];
+        RI.YWorldLimits = [1 H];
+         
+        
+        subplot(3,6,[1 15])
         imshow(im, RI, 'InitialMagnification', 'fit');
         
         
+        
         P = 32; %patchsize
-        
+        %x = 50;
+        %y = 50;
         x1 = x - floor(P/2);
-        x2 = x + ceil(P/2);
+        x2 = x + ceil(P/2) - 1;
         y1 = y - floor(P/2);
-        y2 = y + ceil(P/2);
+        y2 = y + ceil(P/2) - 1;
         
+        x1ref = x1;
+        y1ref = y1;
        
         
-        if (x1>= 0 && x2<= H && y1>=0 && y2<=W)
+        if (x1>= 1 && x2<= W && y1>=1 && y2<=H)
             
             rectangle('Position', [x1, y1, P, P], 'EdgeColor', 'r');
 
@@ -85,10 +94,24 @@ function firstPoint(fh,~)
         end
             
                    
-            %reference_patch = im((x1 : x2), (y1 : y2), :)
+            reference_patch = im((y1 : y2), (x1 : x2), :);
             %figure(1)
-            %subplot(6,3,10)
-            %imshow(reference_patch)
+            subplot(3,6,4);
+            imshow(reference_patch);
+            subplot(3,6,10);
+            imshow(reference_patch);
+            hold on;
+            [X,Y]=meshgrid(0:16:33);
+            plot(X,Y,'k');
+            plot(Y,X,'k'); axis off
+            
+            
+            subplot(3,6,16);
+            imshow(reference_patch);
+            hold on;
+            [X,Y]=meshgrid(0:8:33);
+            plot(X,Y,'k');
+            plot(Y,X,'k'); axis off
             %im((x1-patchSize/2 : x1 + patchSize/2), (y1-patchSize/2 : y1 + patchSize/2), :) = zeros(patchSize+1, patchSize+1, 3);
             %figure(2)
 
@@ -101,26 +124,33 @@ end
 
 
 function changePoint(fh,~)
-        global h1 B ii1 ii2 ii3 ii4
+        global h1 B ii1 ii2 ii3 ii4 x1ref y1ref
         im = imread('9170.jpg');
-        [H,W,C] = size(im);
+        [H,W,C] = size(im)
         P = 32;
         
+        RI = imref2d(size(im));
+        RI.XWorldLimits = [1 W];
+        RI.YWorldLimits = [1 H];
+         
+        subplot(3,6,[1 15])
+        imshow(im, RI, 'InitialMagnification', 'fit');
+        rectangle('Position', [x1ref, y1ref, P, P], 'EdgeColor', 'r');
         
         x = round(fh.CurrentAxes.CurrentPoint(1,1));
         y = round(fh.CurrentAxes.CurrentPoint(1,2));
         
         x1 = x - floor(P/2);
-        x2 = x + ceil(P/2);
+        x2 = x + ceil(P/2) - 1;
         y1 = y - floor(P/2);
-        y2 = y + ceil(P/2);
+        y2 = y + ceil(P/2) - 1;
         
         P = 32; %patchsize
         
         
-        if (x1>= 0 && x2<= H && y1>=0 && y2<=W)
+        if (x1>= 1 && x2<= W && y1>=1 && y2<=H)
             
-            %r = rectangle('Position', [x1, y1, P, P]);
+            r = rectangle('Position', [x1, y1, P, P]);
             
             h2 = zeros(84, B);
             %h2 = zeros(4,B);
@@ -143,7 +173,23 @@ function changePoint(fh,~)
 
 
 
-                %second_patch = im((x - patchSize/2 : x + patchSize/2), (y-patchSize/2 : y + patchSize/2), :);
+                second_patch = im((y1 : y2), (x1 : x2), :);
+                subplot(3,6,6)
+                imshow(second_patch);
+                subplot(3,6,12)
+                imshow(second_patch);
+                hold on;
+                [X,Y]=meshgrid(0:16:33);
+                plot(X,Y,'k');
+                plot(Y,X,'k'); axis off
+                
+                
+                subplot(3,6,18)
+                imshow(second_patch);
+                hold on;
+                [X,Y]=meshgrid(0:8:33);
+                plot(X,Y,'k');
+                plot(Y,X,'k'); axis off
                 %%imshow(reference_patch);
 
                 %f1 = patchEncoding(binImage(reference_patch, B), 'hist', B) 
@@ -151,7 +197,42 @@ function changePoint(fh,~)
                 %f2 = patchEncoding(binImage(second_patch, B), 'hist-normalized', B);
                 
                 
-                dist = histogramDistance(h1/norm(h1), h2/norm(h2), 'chi2');
+                dist = histogramDistance(h1/norm(h1), h2/norm(h2), 'chi2')
+                
+                subplot(3,6,5, 'replace')
+                [X,Y]=meshgrid(0:1);
+                hold on;
+                plot(X,Y,'k');
+                plot(Y,X,'k'); axis off;
+                text(0, 0.5, num2str(1 - sum(dist(1:4))/4));
+                
+                
+                subplot(3,6,11, 'replace')
+                [X,Y]=meshgrid(0:2);
+                hold on;
+                plot(X,Y,'k');
+                plot(Y,X,'k'); axis off
+                l = 5;
+                for i = 0:1
+                    for j = 1:-1:0
+                        text(i, j+0.5, num2str(1 - sum(dist(l:l+3))/4));
+                        l = l + 4;
+                    end
+                end
+                
+                
+                subplot(3,6,17, 'replace')
+                [X,Y]=meshgrid(0:4);
+                hold on;
+                plot(X,Y,'k');
+                plot(Y,X,'k'); axis off
+                l = 21;
+                for i = 0:3
+                    for j = 3:-1:0
+                        text(i, j+0.5, num2str(1 - sum(dist(l:l+3))/4));
+                        l = l + 4;
+                    end
+                end
                 
                 
                 w1 = 0.125*ones(1,4);
@@ -159,6 +240,7 @@ function changePoint(fh,~)
                 w3 = 0.003125*ones(1,64);
                 
                 %h = 1- sum(dist)/length(dist)
+                
                 h = 1 - w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84)
         end
 end
