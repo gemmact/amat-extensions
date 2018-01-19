@@ -41,6 +41,9 @@ ii4 = prepareHistogram(texture, B);
 
 end
 
+
+
+
 function firstPoint(fh,~)
         global h1 B ii1 ii2 ii3 ii4 x1ref y1ref imRGB
         %im = imread(im);
@@ -115,8 +118,7 @@ function firstPoint(fh,~)
             [X,Y]=meshgrid(0:8:33);
             plot(X,Y,'k');
             plot(Y,X,'k'); axis off
-            %im((x1-patchSize/2 : x1 + patchSize/2), (y1-patchSize/2 : y1 + patchSize/2), :) = zeros(patchSize+1, patchSize+1, 3);
-            %figure(2)
+            
 
             %B = 5;
             %f1 = patchEncoding(binImage(reference_patch, B), 'hist-normalized', B); 
@@ -129,7 +131,7 @@ end
 function changePoint(fh,~)
         global h1 B ii1 ii2 ii3 ii4 x1ref y1ref imRGB
         im = imRGB;
-        [H,W,C] = size(im)
+        [H,W,C] = size(im);
         P = 32;
         
         RI = imref2d(size(im));

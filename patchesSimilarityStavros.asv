@@ -83,23 +83,37 @@ selectingNewReference = false;
             rectangle('Position', [refxy(1)-r, refxy(2)-r, 2*r, 2*r], 'EdgeColor', 'g');
             
             % Encode patch and subpatches
+            
             encPatch = subpatchesEncode(x, y);
             
+            
+                     
+            %err = histogramDistance(encRefPatch, encPatch)
 
             % Disable annoying docking error that clutters the command line
             if strcmp(fh.WindowStyle, 'docked')
                 warning('off','images:imshow:magnificationMustBeFitForDockedFigure')
             end
-            
-            
             % Display image and compare/save patches
             if selectingNewReference
+                %save reference patch and encode it
+                refPatch = reshape(imgPatch, [2*r + 1, 2*r + 1, 3]);
+                %encRefPatch(1:3, :) = patchEncoding(binImage(imgPatch,numBins),'hist-normalized',numBins);   
                 
-                %save reference patch
-                refPatch = reshape(imgPatch, [2*r + 1, 2*r + 1, 3]);  
-                
-                % Encode patch and subpatches
-                encRefPatch = subpatchesEncode(x, y);
+            % Encode patch and subpatches
+            l = 1;
+            for k = 2.^(0:2)
+                for i = (-k+1):2:k
+                    for j = (-k+1):2:k
+                        Dsub = abs(xx-(x - i*ceil(r/k))) <= ceil(r/k) & abs(yy-(y - j*ceil(r/k))) <= ceil(r/k);
+                        imgSubpatch = imgLab(Dsub,:);
+                        textureSubpatch = imgTexture(Dsub);
+                        imgSubpatch = cat(2, imgSubpatch, textureSubpatch);
+                        encRefPatch((C+1)*l-C:(C+1)*l, :) = patchEncoding(binImage(imgSubpatch,numBins),'hist-normalized',numBins);
+                        l = l + 1;
+                    end
+                end
+            end
                 
                 %plot patch of reference and subpatches to study
                 subplot(3,6,4);
@@ -112,12 +126,12 @@ selectingNewReference = false;
                 displaySubpatches(refPatch, floor(r/2) + 1);
                 
             else
-                %save patch to compare with reference one
                 comparePatch = reshape(imgPatch, [2*r + 1, 2*r + 1, 3]);
- 
+                %encPatch = patchEncoding(binImage(imgPatch,numBins),'hist-normalized',numBins)  
+                %dist = histogramDistance(encRefPatch, encPatch)
+                
                 %plot square we are comparing to reference one
                 rectangle('Position', [x-r, y-r, 2*r, 2*r], 'EdgeColor', 'k');
-                
                 %plot patch and subpatches to study
                 subplot(3,6,6)
                 imshow(comparePatch);
@@ -129,10 +143,10 @@ selectingNewReference = false;
                 displaySubpatches(comparePatch, floor(r/2) + 1);
                 
                 %compare patches
-                dist = histogramDistance(encRefPatch, encPatch, 'chi2');
+            dist = histogramDistance(encRefPatch, encPatch, 'chi2')
                 
                 
-                %plot similarity scores between histograms
+                %plot similarities between histograms
                 
                 subplot(3,6,5, 'replace')
                 displayScores(0, 1, dist);
@@ -144,15 +158,17 @@ selectingNewReference = false;
                 displayScores(3, 21, dist);
                     
                     
-                %Calculate weighted distance between the two patches        
-                w1 = 0.05*ones(1,4);
-                w2 = 0.01875*ones(1,16);
-                w3 = 0.0078125*ones(1,64);
+            %Calculate weighted distance between the two patches        
+            w1 = 0.125*ones(1,4);
+            w2 = 0.01875*ones(1,16);
+            w3 = 0.003125*ones(1,64);
 
 
-                h = 1 - (sum(w1*dist(1:4)) + sum(w2*dist(5:20)) + sum(w3*dist(21:84)))        
+            h = 1 - (sum(w1*dist(1:4)) + sum(w2*dist(5:20)) + sum(w3*dist(21:84)))        
 
             end
+            
+
             
             
             drawnow;
