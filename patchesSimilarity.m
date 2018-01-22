@@ -55,6 +55,8 @@ selectingNewReference = false;
 w1 = 0.05*ones(1,4);
 w2 = 0.01875*ones(1,16);
 w3 = 0.0078125*ones(1,64);
+
+%Show a heatmap with the homogeneity values of all the patches in the image
 showHomogeneityHeatmap()
 
 
@@ -158,8 +160,6 @@ showHomogeneityHeatmap()
                     
                 %Calculate weighted distance between the two patches        
 
-
-
                 h = 1 - (w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84))
                 
                 
@@ -260,13 +260,18 @@ showHomogeneityHeatmap()
 
     function showSimilarityHeatmap(encRefPatch)
         SimMap = zeros(H, W);
+        
+        %Encode all patches of size 2*rx2*r and their subpatches and
+        %calculate similarity with reference patch
         for i = r:2*r:W-r
-            for j =r:2*r:H-r
+            for j =r:2*r:H-r    
             patchEncode = subpatchesEncode(i, j);
             dist = histogramDistance(encRefPatch, patchEncode, 'chi2');
             SimMap(j-r+1:j+r, i-r+1:i+r) = (1 - (w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84)))*ones(2*r,2*r);
             end
         end
+        
+        %Display heatmap with similarity values to reference patch
         figure(2)
         heatmap(SimMap)
         title('Similarity to reference patch heat map')
@@ -275,6 +280,10 @@ showHomogeneityHeatmap()
 
     function showHomogeneityHeatmap()
         HomMap = zeros(H, W);
+        
+        %Encode histograms for all 2rx2r patches in the image and its 
+        %subpatches and compare the finest with the coarsest scales to
+        %compute homogeneity scores
         for i = r:2*r:W-r
             for j =r:2*r:H-r
             patchEncode = subpatchesEncode(i, j);
@@ -283,6 +292,8 @@ showHomogeneityHeatmap()
             HomMap(j-r+1:j+r, i-r+1:i+r) = (1 - max(hom))*ones(2*r,2*r);
             end
         end
+        
+        %Display homogeneity heat map of the whole image
         figure(3)
         heatmap(HomMap)
         title('Homogeneity heat map')
