@@ -1,4 +1,4 @@
-function fh = patchesSimilarityStavros(imgRGB)
+function fh = patchesSimilarity(imgRGB)
 % DRAWDISKONFIGUREINTERACTIVE Draw reconstructed disk patches on the 
 %   original image and display useful information. This tool allows the 
 %   user to interactively change various parameters, such as the size of
@@ -52,6 +52,10 @@ encRefPatch = zeros((C+1)*(1 + r + 1 + (r + 1)/4), numBins);
 isReferenceFrameSelected = false;
 selectingNewReference = false;
 [xx,yy] = meshgrid(1:W,1:H);
+w1 = 0.05*ones(1,4);
+w2 = 0.01875*ones(1,16);
+w3 = 0.0078125*ones(1,64);
+showHomogeneityHeatmap()
 
 
     function drawSquare(fh)
@@ -79,6 +83,7 @@ selectingNewReference = false;
         end
         
         if isReferenceFrameSelected
+            figure(1)
             % Keep plotting the reference frame
             rectangle('Position', [refxy(1)-r, refxy(2)-r, 2*r, 2*r], 'EdgeColor', 'g');
             
@@ -101,7 +106,14 @@ selectingNewReference = false;
                 % Encode patch and subpatches
                 encRefPatch = subpatchesEncode(x, y);
                 
+                %Create heatmap of similarity values between the reference
+                %patch and the other ones
+                
+                showSimilarityHeatmap(encRefPatch);
+                
                 %plot patch of reference and subpatches to study
+                figure(1)
+                
                 subplot(3,6,4);
                 imshow(refPatch);
                 
@@ -145,12 +157,12 @@ selectingNewReference = false;
                     
                     
                 %Calculate weighted distance between the two patches        
-                w1 = 0.05*ones(1,4);
-                w2 = 0.01875*ones(1,16);
-                w3 = 0.0078125*ones(1,64);
 
 
-                h = 1 - (sum(w1*dist(1:4)) + sum(w2*dist(5:20)) + sum(w3*dist(21:84)))        
+
+                h = 1 - (w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84))
+                
+                
 
             end
             
@@ -223,8 +235,8 @@ selectingNewReference = false;
         plot(X,Y,'k');
         plot(Y,X,'k'); axis off;
         for i = numCols:-1:0
-            for j = numCols:-1:0
-                text(i, j+0.5, num2str(1 - sum(dist(l:l+C))/(C+1)));
+            for j = 0:numCols
+                text(i, j+0.5, num2str(1 - sum(dist(l:l+C))/(C+1), '%.2f'));
                 l = l + 4;
             end
         end
@@ -244,6 +256,36 @@ selectingNewReference = false;
                 end
             end
         end
+    end
+
+    function showSimilarityHeatmap(encRefPatch)
+        SimMap = zeros(H, W);
+        for i = r:2*r:W-r
+            for j =r:2*r:H-r
+            patchEncode = subpatchesEncode(i, j);
+            dist = histogramDistance(encRefPatch, patchEncode, 'chi2');
+            SimMap(j-r+1:j+r, i-r+1:i+r) = (1 - (w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84)))*ones(2*r,2*r);
+            end
+        end
+        figure(2)
+        heatmap(SimMap)
+        title('Similarity to reference patch heat map')
+    end
+
+
+    function showHomogeneityHeatmap()
+        HomMap = zeros(H, W);
+        for i = r:2*r:W-r
+            for j =r:2*r:H-r
+            patchEncode = subpatchesEncode(i, j);
+            h1 = repmat(patchEncode(1:4),1, 16);
+            hom = histogramDistance(h1, patchEncode(21:84), 'chi2');
+            HomMap(j-r+1:j+r, i-r+1:i+r) = (1 - max(hom))*ones(2*r,2*r);
+            end
+        end
+        figure(3)
+        heatmap(HomMap)
+        title('Homogeneity heat map')
     end
 
 end
