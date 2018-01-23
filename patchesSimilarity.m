@@ -39,7 +39,6 @@ set(fh, 'WindowScrollWheelFcn',  @changeRadius);
 [H,W,C] = size(imgRGB);
 imgGray = rgb2gray(imgRGB); 
 imgTexture = textonMap(imgGray, numBins);
-size(imgTexture)
 %imgTexture    = reshape(imgTexture,H*W,[]);
 %tmap    = textonMap(imgRGB, numBins); 
 %tmap    = reshape(tmap,H*W,[]);
@@ -261,7 +260,7 @@ showHomogeneityHeatmap()
     function showSimilarityHeatmap(encRefPatch)
         SimMap = zeros(H, W);
         
-        %Encode all patches of size 2*rx2*r and their subpatches and
+        %Encode all patches of size 2r x 2r and their subpatches and
         %calculate similarity with reference patch
         for i = r:2*r:W-r
             for j =r:2*r:H-r    
@@ -273,7 +272,7 @@ showHomogeneityHeatmap()
         
         %Display heatmap with similarity values to reference patch
         figure(2)
-        heatmap(SimMap)
+        heatmap(SimMap, 'GridVisible', 'off', 'XDisplayLabels', strings(W,1), 'YDisplayLabels', strings(H,1))
         title('Similarity to reference patch heat map')
     end
 
@@ -287,15 +286,15 @@ showHomogeneityHeatmap()
         for i = r:2*r:W-r
             for j =r:2*r:H-r
             patchEncode = subpatchesEncode(i, j);
-            h1 = repmat(patchEncode(1:4),1, 16);
-            hom = histogramDistance(h1, patchEncode(21:84), 'chi2');
+            h1 = repmat(patchEncode(1:4,:),16, 1);
+            hom = histogramDistance(h1, patchEncode(21:84,:), 'chi2');
             HomMap(j-r+1:j+r, i-r+1:i+r) = (1 - max(hom))*ones(2*r,2*r);
             end
         end
         
-        %Display homogeneity heat map of the whole image
+        %Display homogeneity heat map
         figure(3)
-        heatmap(HomMap)
+        heatmap(HomMap, 'GridVisible', 'off', 'XDisplayLabels', strings(W,1), 'YDisplayLabels', strings(H,1))
         title('Homogeneity heat map')
     end
 
