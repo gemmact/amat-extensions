@@ -132,10 +132,10 @@ showHomogeneityHeatmap()
                 imshow(refPatch);
                 
                 subplot(3,6,10, 'replace');
-                displaySubpatches(refPatch, r + 1);
+                displaySubpatches(refPatch, r + mod(r,2));
                 
                 subplot(3,6,16, 'replace');
-                displaySubpatches(refPatch, (r+1)/2);
+                displaySubpatches(refPatch, floor(r/2) + mod(r,2));
             end 
             if (changingRadius || ~selectingNewReference)
                 %save patch to compare with reference one
@@ -152,7 +152,7 @@ showHomogeneityHeatmap()
                 displaySubpatches(comparePatch, r + 1);
 
                 subplot(3,6,18, 'replace')
-                displaySubpatches(comparePatch, (r+1)/2);
+                displaySubpatches(comparePatch, floor(r/2) + 1);
                 
                 %compare patches
                 dist = histogramDistance(encRefPatch, encPatch, 'chi2');
@@ -299,12 +299,12 @@ showHomogeneityHeatmap()
         %Encode histograms for all 2rx2r patches in the image and its 
         %subpatches and compare the finest with the coarsest scales to
         %compute homogeneity scores
-        for i = r+1:2*r:W-r
-            for j =r+1:2*r:H-r
+        for i = r:2*r:W-r
+            for j =r:2*r:H-r
             patchEncode = subpatchesEncode(i, j);
             h1 = repmat(patchEncode(1:4,:),16, 1);
             hom = histogramDistance(h1, patchEncode(21:84,:), 'chi2');
-            HomMap(j-r:j+r, i-r:i+r) = (1 - max(hom))*ones(2*r,2*r);
+            HomMap(j-r+1:j+r, i-r+1:i+r) = (1 - max(hom))*ones(2*r,2*r);
             end
         end
         
