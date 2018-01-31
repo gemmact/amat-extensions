@@ -193,7 +193,7 @@ showHomogeneityHeatmap()
 
     function changeRadius(fh,callbackData)
         changingRadius = true;
-        r = min(min(H,W)/2, max(1, r + callbackData.VerticalScrollCount))
+        r = min(min(H,W)/2, max(1, r + callbackData.VerticalScrollCount));
         showHomogeneityHeatmap()
         drawSquare(fh);
         changingRadius = false;
@@ -278,11 +278,12 @@ showHomogeneityHeatmap()
         
         %Encode all patches of size 2r x 2r and their subpatches and
         %calculate similarity with reference patch
-        for i = r:2*r:W-r
-            for j =r:2*r:H-r    
+        for i = r:W-r
+            for j =r:H-r    
             patchEncode = subpatchesEncode(i, j);
             dist = histogramDistance(encRefPatch, patchEncode, 'chi2');
-            SimMap(j-r+1:j+r, i-r+1:i+r) = (1 - (w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84)))*ones(2*r,2*r);
+            %SimMap(j-r+1:j+r, i-r+1:i+r) = (1 - (w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84)))*ones(2*r,2*r);
+            SimMap(j, i) = (1 - (w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84)));
             end
         end
         
@@ -299,12 +300,13 @@ showHomogeneityHeatmap()
         %Encode histograms for all 2rx2r patches in the image and its 
         %subpatches and compare the finest with the coarsest scales to
         %compute homogeneity scores
-        for i = r+1:2*r:W-r
-            for j =r+1:2*r:H-r
+        for i = r+1:W-r
+            for j =r+1:H-r
             patchEncode = subpatchesEncode(i, j);
             h1 = repmat(patchEncode(1:4,:),16, 1);
             hom = histogramDistance(h1, patchEncode(21:84,:), 'chi2');
-            HomMap(j-r:j+r, i-r:i+r) = (1 - max(hom))*ones(2*r,2*r);
+            %HomMap(j-r+1:j+r, i-r+1:i+r) = (1 - max(hom))*ones(2*r ,2*r);
+            HomMap(j, i) = (1 - max(hom));
             end
         end
         
