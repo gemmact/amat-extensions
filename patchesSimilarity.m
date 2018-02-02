@@ -30,6 +30,7 @@ encodingCounter = find(strcmp(methods.encoding, encodingType));
 
 % Plot figure and set callbacks
 fh = figure(1);
+set(fh, 'Position', [100 100 1100 500])
 subplot(3,6,[1 15]);
 imshow(imgRGB);
 im = imgRGB;
@@ -127,6 +128,7 @@ showHomogeneityHeatmap();
                 
                 subplot(3,6,4, 'replace');
                 imshow(refPatch);
+                title('Reference patch');
                 
                 subplot(3,6,10, 'replace');
                 displaySubpatches(refPatch, r + 1);
@@ -144,8 +146,10 @@ showHomogeneityHeatmap();
                 rectangle('Position', [x-r, y-r, 2*r, 2*r], 'EdgeColor', 'k');
                 
                 %plot patch and subpatches to study
+                
                 subplot(3,6,6, 'replace')
                 imshow(comparePatch);
+                title('Second patch');
                     
                 subplot(3,6,12, 'replace')
                 displaySubpatches(comparePatch, r + 1);
@@ -156,23 +160,23 @@ showHomogeneityHeatmap();
                 %compare patches
                 dist = histogramDistance(encRefPatch, encPatch, 'chi2');
                 
+                %Calculate weighted similarity between the two patches        
+
+                simScore = 1 - (w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84));
                 
                 %plot similarity scores between histograms
                 
                 subplot(3,6,5, 'replace')
                 displayScores(0, 1, dist);
+                
 
                 subplot(3,6,11, 'replace')
                 displayScores(1, 5, dist);
 
                 subplot(3,6,17, 'replace')
                 displayScores(3, 21, dist);
-                    
-                    
-                %Calculate weighted distance between the two patches        
-
-                h = 1 - (w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84))
-                
+                h = xlabel('');     pos = get(h,'Position'); delete(h)
+                h = title(['Similarity score: ' num2str(simScore)]); set(h,'Position',pos);
                 
 
             end
@@ -314,7 +318,7 @@ showHomogeneityHeatmap();
         end
         
         %Display heatmap with similarity values to reference patch
-        figure(2)
+        figure(3)
         heatmap(SimMap, 'GridVisible', 'off', 'XDisplayLabels', strings(W,1), 'YDisplayLabels', strings(H,1))
         title('Similarity to reference patch heat map')
     end
@@ -337,7 +341,7 @@ showHomogeneityHeatmap();
         end
         
         %Display homogeneity heat map
-        figure(3)
+        figure(2)
         heatmap(HomMap, 'GridVisible', 'off', 'XDisplayLabels', strings(W,1), 'YDisplayLabels', strings(H,1))
         title('Homogeneity heat map')
     end
