@@ -91,7 +91,7 @@ showHomogeneityHeatmap();
             rectangle('Position', [refxy(1)-r, refxy(2)-r, 2*r, 2*r], 'EdgeColor', 'g');
             
             % Encode patch and subpatches
-            encPatch = subpatchesEncode(y, x);
+            encPatch = subpatchesEncode(x, y);
             
 
             % Disable annoying docking error that clutters the command line
@@ -120,7 +120,12 @@ showHomogeneityHeatmap();
                 refPatch = reshape(imgRefPatch, [2*r + 1, 2*r + 1, 3]);  
                 
                 % Encode patch and subpatches
-                encRefPatch = subpatchesEncode(refxy(2), refxy(1));
+                encRefPatch = subpatchesEncode(x, y);
+                
+                %Create heatmap of similarity values between the reference
+                %patch and the other ones
+                
+                showSimilarityHeatmap(encRefPatch);
                 
                 %plot patch of reference and subpatches to study
                 figure(1)
@@ -133,8 +138,6 @@ showHomogeneityHeatmap();
                 
                 subplot(3,6,16, 'replace');
                 displaySubpatches(refPatch, (r+1)/2);
-                
-                
             end 
             if (changingRadius || ~selectingNewReference)
                 %save patch to compare with reference one
@@ -196,10 +199,6 @@ showHomogeneityHeatmap();
         showHomogeneityHeatmap()
         drawSquare(fh);
         changingRadius = false;
-        %Create heatmap of similarity values between the reference
-        %patch and the other ones
-                
-        showSimilarityHeatmap(encRefPatch);
     end
     
     function changeNumBins(fh)
@@ -237,11 +236,6 @@ showHomogeneityHeatmap();
         end
         drawSquare(fh)
         selectingNewReference = false;
-        
-        %Create heatmap of similarity values between the reference
-        %patch and the other ones
-                
-        showSimilarityHeatmap(encRefPatch);
     end
 
     function displaySubpatches(im, k)
@@ -257,8 +251,8 @@ showHomogeneityHeatmap();
         hold on;
         plot(X,Y,'k');
         plot(Y,X,'k'); axis off;
-        for j = 0:numCols
-            for i = numCols:-1:0
+        for i = numCols:-1:0
+            for j = 0:numCols
                 text(i, j+0.5, num2str(1 - sum(dist(l:l+C))/(C+1), '%.2f'));
                 l = l + 4;
             end
@@ -274,7 +268,7 @@ showHomogeneityHeatmap();
 %                     imgSubpatch = imgLab(Dsub,:);
 %                     textureSubpatch = imgTexture(Dsub);
 %                     imgSubpatch = cat(2, imgSubpatch, textureSubpatch);
-%                     enc2((C+1)*l-C:(C+1)*l, :) = patchEncoding(binImage(imgSubpatch,numBins),'hist-normalized',numBins);
+%                     enc((C+1)*l-C:(C+1)*l, :) = patchEncoding(binImage(imgSubpatch,numBins),'hist-normalized',numBins);
 %                     l = l + 1;
 %                 end
 %             end
@@ -292,11 +286,6 @@ showHomogeneityHeatmap();
                 end
             end
         end
-        
-        %figure(4)
-        %heatmap(enc)
-        %figure(5)
-        %heatmap(enc2)
     end
 
     function showSimilarityHeatmap(encRefPatch)
@@ -326,8 +315,8 @@ showHomogeneityHeatmap();
         %Encode histograms for all 2rx2r patches in the image and its 
         %subpatches and compare the finest with the coarsest scales to
         %compute homogeneity scores
-        for i = r:W-r
-            for j =r:H-r
+        for i = r+1:W-r
+            for j =r+1:H-r
             patchEncode = subpatchesEncode(j, i);
             h1 = repmat(patchEncode(1:4,:),16, 1);
             hom = histogramDistance(h1, patchEncode(21:84,:), 'chi2');
@@ -346,11 +335,10 @@ showHomogeneityHeatmap();
        Dsub = cell(3,1);
        for i = 1:3 
         kk = 2^(i-1);
-        %%Dsub{i} = abs(xx) <= ceil(r/kk) & abs(yy) <= ceil(r/kk);
-        Dsub{i} = ones(2*ceil(r/kk));
+        Dsub{i} = abs(xx) <= ceil(r/kk) & abs(yy) <= ceil(r/kk);
        end
        imgSubpatch = cat(3, reshape(imgLab, [H,W,C]), imgTexture);
-       enc = imageEncoding(binImage(imgSubpatch,numBins), Dsub, 'hist-normalized', numBins);
+       enc = imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins);
     end
 
 end
