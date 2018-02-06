@@ -333,8 +333,8 @@ showHomogeneityHeatmap();
         for i = r:W-r
             for j =r:H-r
             patchEncode = subpatchesEncode(j, i);
-            h1 = repmat(patchEncode(1:4,:),16, 1);
-            hom = histogramDistance(h1, patchEncode(21:84,:), 'chi2');
+            h1 = repmat(patchEncode(1:4,:),4, 1);
+            hom = histogramDistance(h1, patchEncode(5:20,:), 'chi2');
             %HomMap(j-r+1:j+r, i-r+1:i+r) = (1 - max(hom))*ones(2*r ,2*r);
             HomMap(j, i) = (1 - max(hom));
             end
