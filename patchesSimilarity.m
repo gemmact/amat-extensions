@@ -39,6 +39,7 @@ set(fh, 'WindowButtonDownFcn',   @changeReferencePatch);
 set(fh, 'WindowScrollWheelFcn',  @changeRadius);
 [H,W,C] = size(imgRGB);
 imgGray = rgb2gray(imgRGB); 
+size(imgGray)
 imgTexture = textonMap(imgGray, numBins);
 %imgTexture    = reshape(imgTexture,H*W,[]);
 %tmap    = textonMap(imgRGB, numBins); 
@@ -61,6 +62,7 @@ w3 = 0.0078125*ones(1,64);
 
 %Show a heatmap with the homogeneity values of all the patches in the image
 encImg = imgEncode();
+encImgDisk = imgEncodeDisk();
 showHomogeneityHeatmap();
 
 
@@ -94,8 +96,8 @@ showHomogeneityHeatmap();
             rectangle('Position', [refxy(1)-r, refxy(2)-r, 2*r, 2*r], 'EdgeColor', 'g');
             
             % Encode patch and subpatches
-            encPatch = subpatchesEncode(y, x, 3);
-            %%encPatch = subpatchesEncode3(y, x, 1, 1);
+            %%encPatch = subpatchesEncode(y, x, 3);
+            encPatch = subpatchesEncode3(y, x, 1, 1, 3);
             
 
             % Disable annoying docking error that clutters the command line
@@ -124,8 +126,8 @@ showHomogeneityHeatmap();
                 refPatch = reshape(imgRefPatch, [2*r + 1, 2*r + 1, 3]);  
                 
                 % Encode patch and subpatches
-                encRefPatch = subpatchesEncode(refxy(2), refxy(1), 3);
-                %%encRefPatch = subpatchesEncode3(refxy(2),refxy(1),1,1);
+                %%encRefPatch = subpatchesEncode(refxy(2), refxy(1), 3);
+                encRefPatch = subpatchesEncode3(refxy(2),refxy(1),1,1, 3);
                 
                 
                 %plot patch of reference and subpatches to study
@@ -206,8 +208,7 @@ showHomogeneityHeatmap();
         drawSquare(fh);
         changingRadius = false;
         %Create heatmap of similarity values between the reference
-        %patch and the other ones
-                
+        %patch and the other ones      
         showSimilarityHeatmap(encRefPatch);
     end
     
@@ -248,8 +249,7 @@ showHomogeneityHeatmap();
         selectingNewReference = false;
         
         %Create heatmap of similarity values between the reference
-        %patch and the other ones
-                
+        %patch and the other ones     
         showSimilarityHeatmap(encRefPatch);
     end
 
@@ -288,6 +288,20 @@ showHomogeneityHeatmap();
         end
     end
 
+    function enc = subpatchesEncodeDisk(x,y, v_end)
+        l = 1;
+        for v = 1:v_end
+            k = 2^(v-1);
+            for i = (-k+1):2:k
+                for j = (-k+1):2:k
+                    enc((C+1)*l-C:(C+1)*l, :) = reshape(encImgDisk(x - i*ceil(r/k), y - j*ceil(r/k), :, :, l), [C+1, numBins]);
+                    %enc((C+1)*l-C:(C+1)*l, :) = patchEncoding(binImage(imgSubpatch,numBins),'hist-normalized',numBins);
+                    l = l + 1;
+                end
+            end
+        end
+    end
+
     function encod = subpatchesEncode2(x,y,k,l)
        Dsubb = cell(1); 
        Dsubb{1} = ones(2*ceil(r/k)+1);
@@ -305,13 +319,13 @@ showHomogeneityHeatmap();
        end
     end
 
-    function encod = subpatchesEncode3(x,y,k,v)
+    function encod = subpatchesEncode3(x,y,k,v, v_end)
        encod1 = reshape(encImg(x, y, :, :, v), [C+1, numBins]);
-       if(k<3)
-           encod2 = subpatchesEncode2(x - ceil(r/k)/2,y - ceil(r/k)/2, 2*k, v+1);
-           encod3 = subpatchesEncode2(x - ceil(r/k)/2,y + ceil(r/k)/2, 2*k, v+1);
-           encod4 = subpatchesEncode2(x + ceil(r/k)/2,y - ceil(r/k)/2, 2*k, v+1);
-           encod5 = subpatchesEncode2(x + ceil(r/k)/2,y + ceil(r/k)/2, 2*k, v+1);
+       if(v<v_end)
+           encod2 = subpatchesEncode3(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end);
+           encod3 = subpatchesEncode3(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, v_end);
+           encod4 = subpatchesEncode3(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end);
+           encod5 = subpatchesEncode3(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, v_end);
            encod = [encod1; encod2; encod3; encod4; encod5];
        else
            encod = encod1;
@@ -327,8 +341,8 @@ showHomogeneityHeatmap();
         %calculate similarity with reference patch
         for i = r+1:W-r-1
             for j =r+1:H-r-1    
-            patchEncode = subpatchesEncode(j, i, 3);
-            %%patchEncode = subpatchesEncode3(j,i,1,1);
+            %%patchEncode = subpatchesEncode(j, i, 3);
+            patchEncode = subpatchesEncode3(j,i,1,1,3);
             dist = histogramDistance(encRefPatch, patchEncode, 'chi2');
             %SimMap(j-r+1:j+r, i-r+1:i+r) = (1 - (w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84)))*ones(2*r,2*r);
             SimMap(j, i) = (1 - (w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84)));
@@ -350,8 +364,8 @@ showHomogeneityHeatmap();
         %compute homogeneity scores
         for i = r+1:W-r-1
             for j =r+1:H-r-1
-            patchEncode = subpatchesEncode(j, i, 2);
-            %%patchEncode = subpatchesEncode3(j, i, 1, 1);
+            %patchEncode = subpatchesEncode(j, i, 2);
+            patchEncode = subpatchesEncode3(j, i, 1, 1, 2);
             h1 = repmat(patchEncode(1:4,:),4, 1);
             hom = histogramDistance(h1, patchEncode(5:20,:), 'chi2');
             %HomMap(j-r+1:j+r, i-r+1:i+r) = (1 - max(hom))*ones(2*r ,2*r);
@@ -374,6 +388,19 @@ showHomogeneityHeatmap();
        end
        imgSubpatch = cat(3, reshape(imgLab, [H,W,C]), imgTexture);
        enc = imageEncoding(binImage(imgSubpatch,numBins), Dsub, 'hist-normalized', numBins);
+    end
+
+    %Encodes image using disks and quarters of disk
+    function enc = imgEncodeDisk()
+        Dsub = cell(5,1);
+        Dsub{1}=disk(r);
+        Dsub{2}=disk(r, 'quadrant1');
+        Dsub{3}=disk(r, 'quadrant2');
+        Dsub{4}=disk(r, 'quadrant3');
+        Dsub{5}=disk(r, 'quadrant4');
+        imgSubpatch = cat(3, reshape(imgLab, [H,W,C]), imgTexture);
+        enc = imageEncoding(binImage(imgSubpatch,numBins), Dsub, 'hist-normalized', numBins);
+        
     end
 
 end
