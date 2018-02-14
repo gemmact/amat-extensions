@@ -131,6 +131,7 @@ showHomogeneityHeatmap();
                 encRefPatch = subpatchesEncode3(refxy(2),refxy(1),1,1, 3);
                 
                 %Calculate homogeneity score of reference patch
+                encRefPatch
                 h1 = repmat(encRefPatch(1:4,:),4, 1);
                 hom = histogramDistance(h1, encRefPatch([5:8 25:28 45:48 65:68], :), 'chi2');
                 homRefScore = (1 - max(hom));
@@ -355,13 +356,13 @@ showHomogeneityHeatmap();
 %        end
 %     end
 
-    function encod = subpatchesEncode3(x,y,k,v, v_end, channels)
-       encod1 = reshape(encImg(x, y, :, :, v), [channels, numBins]);
+    function encod = subpatchesEncode3(x,y,k,v, v_end)
+       encod1 = reshape(encImg(x, y, :, :, v), [C+1, numBins]);
        if(v<v_end)
-           encod2 = subpatchesEncode3(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end, channels);
-           encod3 = subpatchesEncode3(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, v_end, channels);
-           encod4 = subpatchesEncode3(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end, channels);
-           encod5 = subpatchesEncode3(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, v_end, channels);
+           encod2 = subpatchesEncode3(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end);
+           encod3 = subpatchesEncode3(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, v_end);
+           encod4 = subpatchesEncode3(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end);
+           encod5 = subpatchesEncode3(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, v_end);
            encod = [encod1; encod2; encod3; encod4; encod5];
        else
            encod = encod1;
@@ -400,11 +401,16 @@ showHomogeneityHeatmap();
         %compute homogeneity scores
         for i = r+1:W-r-1
             for j =r+1:H-r-1
-            %patchEncode = subpatchesEncodeDisk(j, i, 1, 1, 2);
-            patchEncode = subpatchesEncode3(j, i, 1, 1, 2,3);
-            h1 = repmat(patchEncode(1:4,:),4, 1);
-            hom = histogramDistance(h1, patchEncode([5:20], :), 'chi2');
+            patchEncode = subpatchesEncodeDisk(j, i, 1, 1, 2);
+            %patchEncode = subpatchesEncode3(j, i, 1, 1, 2);
+            h1 = repmat(patchEncode(1:3,:),4, 1);
+            hom = histogramDistance(h1, patchEncode([5:7 9:11 13:15 17:19], :), 'chi2');
             HomMap(j, i) = (1 - max(hom));
+            if(j == 65 && i == 95)
+                patchEncode
+                hom
+                %imshow(im(50:80, 80:110))
+            end
             end
         end
         
@@ -416,19 +422,14 @@ showHomogeneityHeatmap();
 
     function enc = imgEncode()
        Dsub = cell(3,1);
-       DsubTex = cell(3,1);
        for i = 1:3 
         kk = 2^(i-1);
         %%Dsub{i} = abs(xx) <= ceil(r/kk) & abs(yy) <= ceil(r/kk);
         Dsub{i} = ones(2*ceil(r/kk));
-        DsubTex{i} = ones(2*ceil(r/(2*kk));
        end
-       imgSubpatch = binImage(reshape(imgLab, [H,W,C]), numBins);
-       %imgSubpatch = cat(3, binImage(reshape(imgLab, [H,W,C]), numBins), imgTexture);
+       %imgSubpatch = binImage(reshape(imgLab, [H,W,C]), numBins);
+       imgSubpatch = cat(3, binImage(reshape(imgLab, [H,W,C]), numBins), imgTexture);
        enc = imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins);
-       enc = imageEncoding(imgTexture, DsubTex, 'hist-normalized', numBins);
-       
-       
     end
 
     %Encodes image using disks and quarters of disk
@@ -441,6 +442,7 @@ showHomogeneityHeatmap();
         Dsub{5}=disk(r, 'quadrant4');
         imgSubpatch = cat(3, binImage(reshape(imgLab, [H,W,C]), numBins), imgTexture);
         enc = imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins);
+        size(enc)
         
     end
 
