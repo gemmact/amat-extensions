@@ -1,22 +1,23 @@
-function fh = patchesSimilarity(imgRGB)
-% DRAWDISKONFIGUREINTERACTIVE Draw reconstructed disk patches on the 
-%   original image and display useful information. This tool allows the 
+function fh = patchesSimilarity(imgRGB, method)
+% PATCHESSIMILARITY Choose a reference patch and compare it to any other
+%   patch of the same size in the image. It also displays the homogeneity heatmap of the image
+%   and the similarity heatmap to the reference patch. This tool allows the 
 %   user to interactively change various parameters, such as the size of
-%   the disk, the type of the error function used, and the method used for
-%   summarizing an image patch. The supported functions include:
+%   the patch and whether its shaped as a disk or a square. The supported functions include:
 % 
-%   [hover mouse over figure]: change the coordinates of the disk center.
-%   [left click]: change the error type used ({'se'},'mse','nmse','rse',
-%                 'rmse','nrmse','dssim').
-%   [right click]:  change the encoding method ({'average'},'hist').
-%   [middle click]: change the number of bins used for the histogram
-%                   computations.
-%   [scroll wheel]: up/down (decrease/increase) the radius of the disk.
+%   [hover mouse over figure]: change the coordinates of the disk/square center.
+%   [left click]: select the square/disk centered at the mouse coordinates as the reference patch.
+%   [scroll wheel]: up/down (decrease/increase) the radius of the disk/square.
 %
-%   See also: patchEncoding
-% 
-%   Stavros Tsogkas <tsogkas@cs.toronto.edu>
-%   Last update: November 2016
+%
+%   methods supported:
+%   'disk'
+%   'square'
+%
+%   See also: imageEncoding
+
+
+if nargin < 2, method = 'disk'; end
 
 % Default parameters
 r = 15;
@@ -62,8 +63,8 @@ w3 = 0.0078125*ones(1,64);
 
 
 %Show a heatmap with the homogeneity values of all the patches in the image
-encImg = imgEncode();
-encImgDisk = imgEncodeDisk();
+encImg = imgEncode(method);
+%encImgDisk = imgEncodeDisk();
 showHomogeneityHeatmap();
 
 
@@ -94,8 +95,12 @@ showHomogeneityHeatmap();
         if isReferenceFrameSelected
             figure(1)
             % Keep plotting the reference frame
-            %%rectangle('Position', [refxy(1)-r, refxy(2)-r, 2*r, 2*r], 'EdgeColor', 'g');
-            drawDisk(refxy(1), refxy(2), r, 'g');
+            switch method
+                case 'square'
+                    rectangle('Position', [refxy(1)-r, refxy(2)-r, 2*r, 2*r], 'EdgeColor', 'g');
+                case 'disk'
+                    drawDisk(refxy(1), refxy(2), r, 'g');
+            end
             % Encode patch and subpatches
             %%encPatch = subpatchesEncode(y, x, 3);
             encPatch = subpatchesEncode3(y, x, 1, 1, 3);
@@ -131,9 +136,9 @@ showHomogeneityHeatmap();
                 encRefPatch = subpatchesEncode3(refxy(2),refxy(1),1,1, 3);
                 
                 %Calculate homogeneity score of reference patch
-                encRefPatchDisk = subpatchesEncodeDisk(refxy(2),refxy(1),1,1, 2);
-                h1 = repmat(encRefPatchDisk(1:3,:),4, 1);
-                hom = histogramDistance(h1, encRefPatchDisk([5:7 9:11 13:15 17:19], :), 'chi2');
+                encRefPatchDisk = subpatchesEncode(refxy(2),refxy(1),1,1, 2, 1:4);
+                h1 = repmat(encRefPatchDisk(1:4,:),4, 1);
+                hom = histogramDistance(h1, encRefPatchDisk(5:20, :), 'chi2');
                 homRefScore = (1 - max(hom));
                 
                 %plot patch of reference and subpatches to study
@@ -160,13 +165,17 @@ showHomogeneityHeatmap();
                 comparePatch = reshape(imgPatch, [2*r + 1, 2*r + 1, 3]);
  
                 %plot square we are comparing to reference one
-                %%rectangle('Position', [x-r, y-r, 2*r, 2*r], 'EdgeColor', 'r');
-                drawDisk(x, y, r, 'r');
+                switch method
+                    case 'square'
+                        rectangle('Position', [x-r, y-r, 2*r, 2*r], 'EdgeColor', 'b');
+                    case 'disk'
+                        drawDisk(x, y, r, 'b');
+                end
                 
                 %Compute homogeneity score of patch
-                encPatchDisk = subpatchesEncodeDisk(y,x,1,1, 2);
-                h1 = repmat(encPatchDisk(1:3,:),4, 1);
-                hom = histogramDistance(h1, encPatchDisk([5:7 9:11 13:15 17:19], :), 'chi2')
+                encPatchDisk = subpatchesEncode(y,x,1,1, 2, 1:4);
+                h1 = repmat(encPatchDisk(1:4,:),4, 1);
+                hom = histogramDistance(h1, encPatchDisk(5:20, :), 'chi2');
                 homScore = (1 - max(hom));
                 
                 %plot patch and subpatches to study
@@ -213,8 +222,12 @@ showHomogeneityHeatmap();
             drawnow;
         else
             % Simply plot square frame of the patch
-            %%rectangle('Position', [x-r, y-r, 2*r, 2*r], 'EdgeColor', 'k');
-            drawDisk(x, y, r, 'k');
+            switch method
+                case 'square'
+                    rectangle('Position', [x-r, y-r, 2*r, 2*r], 'EdgeColor', 'b');
+                case 'disk'
+                    drawDisk(x, y, r, 'b');
+            end
         end        
     end
 
@@ -276,7 +289,12 @@ showHomogeneityHeatmap();
     end
 
     function displaySubpatches(im, k)
-        imshow(im.*disk(r));
+        switch method
+            case 'disk'
+                imshow(im.*disk(r));
+            case 'square'
+                imshow(im);
+        end
         hold on;
         if (k>0)
             [X,Y]=meshgrid(0:k:2*r+2);
@@ -315,49 +333,28 @@ showHomogeneityHeatmap();
         end
     end
 
-%     function enc = subpatchesEncode(x,y, v_end)
-%         l = 1;
-%         for v = 1:v_end
-%             k = 2^(v-1);
-%             for i = (-k+1):2:k
-%                 for j = (-k+1):2:k
-%                     enc((C+1)*l-C:(C+1)*l, :) = reshape(encImg(x - i*ceil(r/k), y - j*ceil(r/k), :, :, v), [C+1, numBins]);
-%                     %enc((C+1)*l-C:(C+1)*l, :) = patchEncoding(binImage(imgSubpatch,numBins),'hist-normalized',numBins);
-%                     l = l + 1;
-%                 end
-%             end
-%         end
-%     end
 
-    function encod = subpatchesEncodeDisk(x,y,k,v, v_end)
-       encod1 = reshape(encImgDisk(x, y, :, :, v), [C+1, numBins]);
+    function encod = subpatchesEncode(x,y,k,v, v_end, chan)
+       encod1 = reshape(encImg(x, y, chan, :, v), [length(chan), numBins]);
        if(v<v_end)
-           encod2 = subpatchesEncodeDisk(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end);
-           encod3 = subpatchesEncodeDisk(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+2, v_end);
-           encod4 = subpatchesEncodeDisk(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+3, v_end);
-           encod5 = subpatchesEncodeDisk(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+4, v_end);
+           switch method
+               case 'disk'
+                   encod2 = subpatchesEncode(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, 4*v-2, v_end, chan);
+                   encod3 = subpatchesEncode(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, 4*v-1, v_end, chan);
+                   encod4 = subpatchesEncode(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, 4*v, v_end, chan);
+                   encod5 = subpatchesEncode(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, 4*v+1, v_end, chan);
+               case 'square'
+                   encod2 = subpatchesEncode(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end, chan);
+                   encod3 = subpatchesEncode(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, v_end, chan);
+                   encod4 = subpatchesEncode(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end, chan);
+                   encod5 = subpatchesEncode(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, v_end, chan);  
+           end
            encod = [encod1; encod2; encod3; encod4; encod5];
        else
            encod = encod1;
        end
     end
 
-%     function encod = subpatchesEncode2(x,y,k,v, v_end)
-%        Dsubb = cell(1); 
-%        Dsubb{1} = ones(2*ceil(r/k)+1);
-%        imgSubpatch = cat(3, imgLabMatrix(x-r/k:x+r/k, y-r/k:y+r/k, :), imgTexture(x-r/k:x+r/k, y-r/k:y+r/k));
-%        encodePatch = imageEncoding(binImage(imgSubpatch,numBins), Dsubb, 'hist-normalized', numBins);
-%        encod1 = reshape(encodePatch(ceil(r/k), ceil(r/k), :, :), [C+1, numBins]);
-%        if(v<v_end)
-%            encod2 = subpatchesEncode2(x - ceil(r/k)/2,y - ceil(r/k)/2, 2*k, v+1, v_end);
-%            encod3 = subpatchesEncode2(x - ceil(r/k)/2,y + ceil(r/k)/2, 2*k, v+1, v_end);
-%            encod4 = subpatchesEncode2(x + ceil(r/k)/2,y - ceil(r/k)/2, 2*k, v+1, v_end);
-%            encod5 = subpatchesEncode2(x + ceil(r/k)/2,y + ceil(r/k)/2, 2*k, v+1, v_end);
-%            encod = [encod1; encod2; encod3; encod4; encod5];
-%        else
-%            encod = encod1;
-%        end
-%     end
 
     function encod = subpatchesEncode3(x,y,k,v, v_end)
        encod1 = reshape(encImg(x, y, :, :, v), [C+1, numBins]);
@@ -404,16 +401,17 @@ showHomogeneityHeatmap();
         %compute homogeneity scores
         for i = r+1:W-r-1
             for j =r+1:H-r-1
-            patchEncode = subpatchesEncodeDisk(j, i, 1, 1, 2);
-            %patchEncode = subpatchesEncode3(j, i, 1, 1, 2);
+            patchEncode = subpatchesEncode(j, i, 1, 1, 2, 1:3);
+            patchEncodeTex = subpatchesEncode(j, i, 1, 1, 2,4);
             h1 = repmat(patchEncode(1:3,:),4, 1);
-            hom = histogramDistance(h1, patchEncode([5:7 9:11 13:15 17:19], :), 'chi2');
-            HomMap(j, i) = (1 - max(hom));
-            if(j == 65 && i == 95)
-                patchEncode
-                hom
-                %imshow(im(50:80, 80:110))
-            end
+            h2 = repmat(patchEncodeTex(1,:),4, 1);
+            hom = histogramDistance(h1, patchEncode(4:15, :), 'chi2');
+            hom2 = histogramDistance(h2, patchEncodeTex(2:5, :), 'chi2');
+            HomMap(j, i) = (1 - max([hom;hom2]));
+            %patchEncode = subpatchesEncode3(j, i, 1, 1, 2);
+            %h1 = repmat(patchEncode(1:4,:),4, 1);
+            %hom = histogramDistance(h1, patchEncode(5:20, :), 'chi2');
+            %HomMap(j, i) = (1 - max(hom));
             end
         end
         
@@ -423,31 +421,60 @@ showHomogeneityHeatmap();
         title('Homogeneity heat map')
     end
 
-    function enc = imgEncode()
-       Dsub = cell(3,1);
-       for i = 1:3 
-        kk = 2^(i-1);
-        %%Dsub{i} = abs(xx) <= ceil(r/kk) & abs(yy) <= ceil(r/kk);
-        Dsub{i} = ones(2*ceil(r/kk));
-       end
+    function enc = imgEncode(method)
+        switch method
+            case 'square'
+               Dsub = cell(3,1);
+               DsubTex = cell(3,1);
+               for i = 1:3 
+                kk = 2^(i-1);
+                Dsub{i} = ones(2*ceil(r/kk));
+                DsubTex{i} = ones(2*ceil(r/kk));
+               end
+            case 'disk'
+                Dsub = cell(5,1);
+                DsubTex = cell(5,1);
+                Dsub{1}=disk(r);
+                Dsub{2}=disk(r, 'quadrant4');
+                Dsub{3}=disk(r, 'quadrant3');
+                Dsub{4}=disk(r, 'quadrant2');
+                Dsub{5}=disk(r, 'quadrant1');
+                DsubTex{1}=disk(4*r/4);
+                DsubTex{2}=disk(4*r/4, 'quadrant4');
+                DsubTex{3}=disk(4*r/4, 'quadrant3');
+                DsubTex{4}=disk(4*r/4, 'quadrant2');
+                DsubTex{5}=disk(4*r/4, 'quadrant1');
+            otherwise
+                error('Method not supported')
+        end
        %imgSubpatch = binImage(reshape(imgLab, [H,W,C]), numBins);
-       imgSubpatch = cat(3, binImage(reshape(imgLab, [H,W,C]), numBins), imgTexture);
-       enc = imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins);
+       imgSubpatch = binImage(reshape(imgLab, [H,W,C]), numBins);
+       enc = cat(3, imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins),imageEncoding(imgTexture, DsubTex, 'hist-normalized', numBins));
+        
+       %imgSubpatch = cat(3, binImage(reshape(imgLab, [H,W,C]), numBins), imgTexture);
+       %enc = imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins);
     end
 
-    %Encodes image using disks and quarters of disk
-    function enc = imgEncodeDisk()
-        Dsub = cell(5,1);
-        Dsub{1}=disk(r);
-        Dsub{2}=disk(r, 'quadrant4');
-        Dsub{3}=disk(r, 'quadrant3');
-        Dsub{4}=disk(r, 'quadrant2');
-        Dsub{5}=disk(r, 'quadrant1');
-        imgSubpatch = cat(3, binImage(reshape(imgLab, [H,W,C]), numBins), imgTexture);
-        enc = imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins);
-        size(enc)
-        
-    end
+%     %Encodes image using disks and quarters of disk
+%     function enc = imgEncodeDisk()
+%         Dsub = cell(5,1);
+%         DsubTex = cell(5,1);
+%         Dsub{1}=disk(r);
+%         Dsub{2}=disk(r, 'quadrant4');
+%         Dsub{3}=disk(r, 'quadrant3');
+%         Dsub{4}=disk(r, 'quadrant2');
+%         Dsub{5}=disk(r, 'quadrant1');
+%         DsubTex{1}=disk(4*r/4);
+%         DsubTex{2}=disk(4*r/4, 'quadrant4');
+%         DsubTex{3}=disk(4*r/4, 'quadrant3');
+%         DsubTex{4}=disk(4*r/4, 'quadrant2');
+%         DsubTex{5}=disk(4*r/4, 'quadrant1');
+%         %imgSubpatch = cat(3, binImage(reshape(imgLab, [H,W,C]), numBins), imgTexture);
+%         %enc = imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins);
+%         imgSubpatch = binImage(reshape(imgLab, [H,W,C]), numBins);
+%         enc = cat(3, imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins),imageEncoding(imgTexture, DsubTex, 'hist-normalized', numBins));
+%         
+%     end
 
     function drawDisk(xCenter, yCenter, r, col)
         theta = 0 : 0.01 : 2*pi;

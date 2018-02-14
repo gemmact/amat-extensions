@@ -28,25 +28,24 @@ switch method
         d = x.^2 + y.^2 < r^2;
         d = d(2:(end-1),2:(end-1));
     case 'quadrant1'
-        r = r;
         [x,y] = meshgrid(-r:r, -r:r);
         d = x.^2 + y.^2 <= r^2;
         d = d(1:r+1,1:r+1);
     case 'quadrant2'
-        r = r;
         [x,y] = meshgrid(-r:r, -r:r);
         d = x.^2 + y.^2 <= r^2;
         d = d(1:r+1,r+1:end);
     case 'quadrant3'
-        r = r;
         [x,y] = meshgrid(-r:r, -r:r);
         d = x.^2 + y.^2 <= r^2;
         d = d(r+1:end,1:r+1);
     case 'quadrant4'
-        r = r;
         [x,y] = meshgrid(-r:r, -r:r);
         d = x.^2 + y.^2 <= r^2;
-        d = d(r+1:end,r+1:end);       
+        d = d(r+1:end,r+1:end);
+    case 'eigth1'
+        
+        
     otherwise
         error('Method not supported')
 end
