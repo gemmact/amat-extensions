@@ -41,7 +41,7 @@ set(fh, 'WindowScrollWheelFcn',  @changeRadius);
 [H,W,C] = size(imgRGB);
 imgGray = rgb2gray(imgRGB); 
 
-imgTexture = textonMap(imgGray, numBins);
+imgTexture = textonMap(imgGray, numBins)
 figure(5); imagesc(imgTexture); axis off image;
 %imgTexture    = reshape(imgTexture,H*W,[]);
 %tmap    = textonMap(imgRGB, numBins); 
@@ -174,9 +174,15 @@ showHomogeneityHeatmap();
                 
                 %Compute homogeneity score of patch
                 encPatchDisk = subpatchesEncode(y,x,1,1, 2, 1:4);
+                %encPatchDiskTex = subpatchesEncode(y,x,1,1, 2, 4);
                 h1 = repmat(encPatchDisk(1:4,:),4, 1);
+                %h2 = repmat(encPatchDiskTex(1,:),4, 1);
+                %hom = histogramDistance(h1, encPatchDisk(4:15, :), 'chi2')
+                %hom2 = histogramDistance(h2, encPatchDiskTex(2:5, :), 'chi2')
+                %homScore = (1 - max([hom;hom2]));
                 hom = histogramDistance(h1, encPatchDisk(5:20, :), 'chi2');
                 homScore = (1 - max(hom));
+
                 
                 %plot patch and subpatches to study
                 
@@ -401,17 +407,18 @@ showHomogeneityHeatmap();
         %compute homogeneity scores
         for i = r+1:W-r-1
             for j =r+1:H-r-1
-            patchEncode = subpatchesEncode(j, i, 1, 1, 2, 1:3);
-            patchEncodeTex = subpatchesEncode(j, i, 1, 1, 2,4);
-            h1 = repmat(patchEncode(1:3,:),4, 1);
-            h2 = repmat(patchEncodeTex(1,:),4, 1);
-            hom = histogramDistance(h1, patchEncode(4:15, :), 'chi2');
-            hom2 = histogramDistance(h2, patchEncodeTex(2:5, :), 'chi2');
-            HomMap(j, i) = (1 - max([hom;hom2]));
+            patchEncode = subpatchesEncode(j, i, 1, 1, 2, 1:4);
+            %patchEncodeTex = subpatchesEncode(j, i, 1, 1, 2,4);
+            h1 = repmat(patchEncode(1:4,:),4, 1);
+            %h2 = repmat(patchEncodeTex(1,:),4, 1);
+            %hom = histogramDistance(h1, patchEncode(4:15, :), 'chi2');
+            %hom2 = histogramDistance(h2, patchEncodeTex(2:5, :), 'chi2');
+            %HomMap(j, i) = (1 - max([hom;hom2]));
             %patchEncode = subpatchesEncode3(j, i, 1, 1, 2);
             %h1 = repmat(patchEncode(1:4,:),4, 1);
-            %hom = histogramDistance(h1, patchEncode(5:20, :), 'chi2');
-            %HomMap(j, i) = (1 - max(hom));
+            hom = histogramDistance(h1, patchEncode(5:20, :), 'chi2');
+            hom = sum(0.25*reshape(hom, [4, 4]));
+            HomMap(j, i) = (1 - max(hom));
             end
         end
         
@@ -439,42 +446,22 @@ showHomogeneityHeatmap();
                 Dsub{3}=disk(r, 'quadrant3');
                 Dsub{4}=disk(r, 'quadrant2');
                 Dsub{5}=disk(r, 'quadrant1');
-                DsubTex{1}=disk(4*r/4);
-                DsubTex{2}=disk(4*r/4, 'quadrant4');
-                DsubTex{3}=disk(4*r/4, 'quadrant3');
-                DsubTex{4}=disk(4*r/4, 'quadrant2');
-                DsubTex{5}=disk(4*r/4, 'quadrant1');
+%                 DsubTex{1}=disk(4*r/4);
+%                 DsubTex{2}=disk(4*r/4, 'quadrant4');
+%                 DsubTex{3}=disk(4*r/4, 'quadrant3');
+%                 DsubTex{4}=disk(4*r/4, 'quadrant2');
+%                 DsubTex{5}=disk(4*r/4, 'quadrant1');
             otherwise
                 error('Method not supported')
         end
        %imgSubpatch = binImage(reshape(imgLab, [H,W,C]), numBins);
-       imgSubpatch = binImage(reshape(imgLab, [H,W,C]), numBins);
-       enc = cat(3, imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins),imageEncoding(imgTexture, DsubTex, 'hist-normalized', numBins));
+       %enc = cat(3, imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins),imageEncoding(imgTexture, DsubTex, 'hist-normalized', numBins));
         
-       %imgSubpatch = cat(3, binImage(reshape(imgLab, [H,W,C]), numBins), imgTexture);
-       %enc = imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins);
+       imgSubpatch = cat(3, binImage(reshape(imgLab, [H,W,C]), numBins), imgTexture);
+       enc = imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins);
     end
 
-%     %Encodes image using disks and quarters of disk
-%     function enc = imgEncodeDisk()
-%         Dsub = cell(5,1);
-%         DsubTex = cell(5,1);
-%         Dsub{1}=disk(r);
-%         Dsub{2}=disk(r, 'quadrant4');
-%         Dsub{3}=disk(r, 'quadrant3');
-%         Dsub{4}=disk(r, 'quadrant2');
-%         Dsub{5}=disk(r, 'quadrant1');
-%         DsubTex{1}=disk(4*r/4);
-%         DsubTex{2}=disk(4*r/4, 'quadrant4');
-%         DsubTex{3}=disk(4*r/4, 'quadrant3');
-%         DsubTex{4}=disk(4*r/4, 'quadrant2');
-%         DsubTex{5}=disk(4*r/4, 'quadrant1');
-%         %imgSubpatch = cat(3, binImage(reshape(imgLab, [H,W,C]), numBins), imgTexture);
-%         %enc = imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins);
-%         imgSubpatch = binImage(reshape(imgLab, [H,W,C]), numBins);
-%         enc = cat(3, imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins),imageEncoding(imgTexture, DsubTex, 'hist-normalized', numBins));
-%         
-%     end
+
 
     function drawDisk(xCenter, yCenter, r, col)
         theta = 0 : 0.01 : 2*pi;
