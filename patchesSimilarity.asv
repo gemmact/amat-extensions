@@ -103,8 +103,8 @@ showHomogeneityHeatmap();
             end
             % Encode patch and subpatches
             %%encPatch = subpatchesEncode(y, x, 3);
-            encPatch = subpatchesEncode3(y, x, 1, 1, 3);
-            
+            %encPatch = subpatchesEncode3(y, x, 1, 1, 3);
+            encPatch = subpatchesEncode(y, x, 1, 1, 4, 1:4);
 
             % Disable annoying docking error that clutters the command line
             if strcmp(fh.WindowStyle, 'docked')
@@ -133,13 +133,11 @@ showHomogeneityHeatmap();
                 
                 % Encode patch and subpatches
                 %%encRefPatch = subpatchesEncode(refxy(2), refxy(1), 3);
-                encRefPatch = subpatchesEncode3(refxy(2),refxy(1),1,1, 3);
+                %encRefPatch = subpatchesEncode3(refxy(2),refxy(1),1,1, 3);
+                encRefPatch = subpatchesEncode(refxy(2), refxy(1), 1, 1, 4, 1:4);
                 
                 %Calculate homogeneity score of reference patch
-                encRefPatchDisk = subpatchesEncode(refxy(2),refxy(1),1,1, 2, 1:4);
-                h1 = repmat(encRefPatchDisk(1:4,:),4, 1);
-                hom = histogramDistance(h1, encRefPatchDisk(5:20, :), 'chi2');
-                homRefScore = (1 - max(hom));
+                homRefScore = computeHomogeneity(refxy(1), refxy(2));
                 
                 %plot patch of reference and subpatches to study
                 figure(1)
@@ -173,15 +171,7 @@ showHomogeneityHeatmap();
                 end
                 
                 %Compute homogeneity score of patch
-                encPatchDisk = subpatchesEncode(y,x,1,1, 2, 1:4);
-                %encPatchDiskTex = subpatchesEncode(y,x,1,1, 2, 4);
-                h1 = repmat(encPatchDisk(1:4,:),4, 1);
-                %h2 = repmat(encPatchDiskTex(1,:),4, 1);
-                %hom = histogramDistance(h1, encPatchDisk(4:15, :), 'chi2')
-                %hom2 = histogramDistance(h2, encPatchDiskTex(2:5, :), 'chi2')
-                %homScore = (1 - max([hom;hom2]));
-                hom = histogramDistance(h1, encPatchDisk(5:20, :), 'chi2');
-                homScore = (1 - max(hom));
+                homScore = computeHomogeneity(x, y);
 
                 
                 %plot patch and subpatches to study
@@ -340,20 +330,20 @@ showHomogeneityHeatmap();
     end
 
 
-    function encod = subpatchesEncode(x,y,k,v, v_end, chan)
+    function encod = subpatchesEncode(x,y,k,v, k_end, chan)
        encod1 = reshape(encImg(x, y, chan, :, v), [length(chan), numBins]);
-       if(v<v_end)
+       if(k<k_end)
            switch method
                case 'disk'
-                   encod2 = subpatchesEncode(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, 4*v-2, v_end, chan);
-                   encod3 = subpatchesEncode(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, 4*v-1, v_end, chan);
-                   encod4 = subpatchesEncode(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, 4*v, v_end, chan);
-                   encod5 = subpatchesEncode(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, 4*v+1, v_end, chan);
+                   encod2 = subpatchesEncode(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, 4*v-2, k_end, chan);
+                   encod3 = subpatchesEncode(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, 4*v-1, k_end, chan);
+                   encod4 = subpatchesEncode(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, 4*v, k_end, chan);
+                   encod5 = subpatchesEncode(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, 4*v+1, k_end, chan);
                case 'square'
-                   encod2 = subpatchesEncode(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end, chan);
-                   encod3 = subpatchesEncode(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, v_end, chan);
-                   encod4 = subpatchesEncode(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end, chan);
-                   encod5 = subpatchesEncode(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, v_end, chan);  
+                   encod2 = subpatchesEncode(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, k_end, chan);
+                   encod3 = subpatchesEncode(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, k_end, chan);
+                   encod4 = subpatchesEncode(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, k_end, chan);
+                   encod5 = subpatchesEncode(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, k_end, chan);  
            end
            encod = [encod1; encod2; encod3; encod4; encod5];
        else
@@ -401,7 +391,7 @@ showHomogeneityHeatmap();
         for i = r+1:W-r-1
             for j =r+1:H-r-1    
             %%patchEncode = subpatchesEncode(j, i, 3);
-            patchEncode = subpatchesEncode(j, i, 1, 1, 3, 1:4);
+            patchEncode = subpatchesEncode(j, i, 1, 1, 4, 1:4);
             dist = histogramDistance(encRefPatch, patchEncode, 'chi2');
             %SimMap(j, i) = (1 - (w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84)));
             SimMap(j, i) = (1 - (w1*dist(1:4) + w2*dist([5:8 25:28 45:48 65:68]) + w3*dist([9:24 29:44 49:64 69:84])));
@@ -414,15 +404,7 @@ showHomogeneityHeatmap();
         title('Similarity to reference patch heat map')
     end
 
-
-    function showHomogeneityHeatmap()
-        HomMap = zeros(H, W);
-        
-        %Encode histograms for all 2rx2r patches in the image and its 
-        %subpatches and compare the finest with the coarsest scales to
-        %compute homogeneity scores
-        for i = r+1:W-r-1
-            for j =r+1:H-r-1
+    function homScore = computeHomogeneity(i, j)
             patchEncode = subpatchesEncode(j, i, 1, 1, 2, 1:4);
             %patchEncodeTex = subpatchesEncode(j, i, 1, 1, 2,4);
             h1 = repmat(patchEncode(1:4,:),4, 1);
@@ -445,7 +427,19 @@ showHomogeneityHeatmap();
                 homTot = hom;
             end
             
-            HomMap(j, i) = (1 - max(homTot));
+            homScore = (1 - max(homTot));
+    end
+
+
+    function showHomogeneityHeatmap()
+        HomMap = zeros(H, W);
+        
+        %Encode histograms for all 2rx2r patches in the image and its 
+        %subpatches and compare the finest with the coarsest scales to
+        %compute homogeneity scores
+        for i = r+1:W-r-1
+            for j =r+1:H-r-1
+            HomMap(j, i) = computeHomogeneity(i, j);
             end
         end
         

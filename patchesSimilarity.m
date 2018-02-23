@@ -137,10 +137,7 @@ showHomogeneityHeatmap();
                 encRefPatch = subpatchesEncode(refxy(2), refxy(1), 1, 1, 4, 1:4);
                 
                 %Calculate homogeneity score of reference patch
-                encRefPatchDisk = subpatchesEncode(refxy(2),refxy(1),1,1, 2, 1:4);
-                h1 = repmat(encRefPatchDisk(1:4,:),4, 1);
-                hom = histogramDistance(h1, encRefPatchDisk(5:20, :), 'chi2');
-                homRefScore = (1 - max(hom));
+                homRefScore = computeHomogeneity(refxy(1), refxy(2));
                 
                 %plot patch of reference and subpatches to study
                 figure(1)
@@ -174,15 +171,7 @@ showHomogeneityHeatmap();
                 end
                 
                 %Compute homogeneity score of patch
-                encPatchDisk = subpatchesEncode(y,x,1,1, 2, 1:4);
-                %encPatchDiskTex = subpatchesEncode(y,x,1,1, 2, 4);
-                h1 = repmat(encPatchDisk(1:4,:),4, 1);
-                %h2 = repmat(encPatchDiskTex(1,:),4, 1);
-                %hom = histogramDistance(h1, encPatchDisk(4:15, :), 'chi2')
-                %hom2 = histogramDistance(h2, encPatchDiskTex(2:5, :), 'chi2')
-                %homScore = (1 - max([hom;hom2]));
-                hom = histogramDistance(h1, encPatchDisk(5:20, :), 'chi2');
-                homScore = (1 - max(hom));
+                homScore = computeHomogeneity(x, y);
 
                 
                 %plot patch and subpatches to study
@@ -415,15 +404,7 @@ showHomogeneityHeatmap();
         title('Similarity to reference patch heat map')
     end
 
-
-    function showHomogeneityHeatmap()
-        HomMap = zeros(H, W);
-        
-        %Encode histograms for all 2rx2r patches in the image and its 
-        %subpatches and compare the finest with the coarsest scales to
-        %compute homogeneity scores
-        for i = r+1:W-r-1
-            for j =r+1:H-r-1
+    function homScore = computeHomogeneity(i, j)
             patchEncode = subpatchesEncode(j, i, 1, 1, 2, 1:4);
             %patchEncodeTex = subpatchesEncode(j, i, 1, 1, 2,4);
             h1 = repmat(patchEncode(1:4,:),4, 1);
@@ -446,7 +427,19 @@ showHomogeneityHeatmap();
                 homTot = hom;
             end
             
-            HomMap(j, i) = (1 - max(homTot));
+            homScore = (1 - max(homTot));
+    end
+
+
+    function showHomogeneityHeatmap()
+        HomMap = zeros(H, W);
+        
+        %Encode histograms for all 2rx2r patches in the image and its 
+        %subpatches and compare the finest with the coarsest scales to
+        %compute homogeneity scores
+        for i = r+1:W-r-1
+            for j =r+1:H-r-1
+            HomMap(j, i) = computeHomogeneity(i, j);
             end
         end
         
