@@ -366,10 +366,10 @@ showHomogeneityHeatmap();
        if(v<v_end)
            switch method
                case 'disk'
-                   encod2 = subpatchesEncodeDiag(x,y - ceil(r/(2*k)), 2*k, v+1, v_end, chan);
-                   encod3 = subpatchesEncodeDiag(x - ceil(r/(2*k)),y, 2*k, v+2, v_end, chan);
-                   encod4 = subpatchesEncodeDiag(x + ceil(r/(2*k)),y, 2*k, v+3, v_end, chan);
-                   encod5 = subpatchesEncodeDiag(x,y + ceil(r/(2*k)), 2*k, v+4, v_end, chan); 
+                   encod2 = subpatchesEncodeDiag(x,y - ceil(r/(2*k)), 2*k, 4*v-2, v_end, chan);
+                   encod3 = subpatchesEncodeDiag(x - ceil(r/(2*k)),y, 2*k, 4*v-1, v_end, chan);
+                   encod4 = subpatchesEncodeDiag(x + ceil(r/(2*k)),y, 2*k, 4*v, v_end, chan);
+                   encod5 = subpatchesEncodeDiag(x,y + ceil(r/(2*k)), 2*k, 4*v+1, v_end, chan); 
            end
            encod = [encod1; encod2; encod3; encod4; encod5];
        else
@@ -436,7 +436,7 @@ showHomogeneityHeatmap();
             hom = sum(0.25*reshape(hom, [4, 4]));
             switch method
                 case 'disk'
-                patchEncodeDiag = subpatchesEncodeDiag(j, i, 1, 6, 7, 1:4);
+                patchEncodeDiag = subpatchesEncodeDiag(j, i, 1, 5, 2, 1:4);
                 h1Diag = repmat(patchEncodeDiag(1:4,:),4, 1);
                 homDiag = histogramDistance(h1Diag, patchEncodeDiag(5:20, :), 'chi2');
                 homDiag = sum(0.25*reshape(homDiag, [4, 4]));
