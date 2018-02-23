@@ -103,8 +103,8 @@ showHomogeneityHeatmap();
             end
             % Encode patch and subpatches
             %%encPatch = subpatchesEncode(y, x, 3);
-            encPatch = subpatchesEncode3(y, x, 1, 1, 3);
-            
+            %encPatch = subpatchesEncode3(y, x, 1, 1, 3);
+            encPatch = subpatchesEncode(y, x, 1, 1, 4, 1:4);
 
             % Disable annoying docking error that clutters the command line
             if strcmp(fh.WindowStyle, 'docked')
@@ -133,7 +133,8 @@ showHomogeneityHeatmap();
                 
                 % Encode patch and subpatches
                 %%encRefPatch = subpatchesEncode(refxy(2), refxy(1), 3);
-                encRefPatch = subpatchesEncode3(refxy(2),refxy(1),1,1, 3);
+                %encRefPatch = subpatchesEncode3(refxy(2),refxy(1),1,1, 3);
+                encRefPatch = subpatchesEncode(refxy(2), refxy(1), 1, 1, 4, 1:4);
                 
                 %Calculate homogeneity score of reference patch
                 encRefPatchDisk = subpatchesEncode(refxy(2),refxy(1),1,1, 2, 1:4);
@@ -340,20 +341,20 @@ showHomogeneityHeatmap();
     end
 
 
-    function encod = subpatchesEncode(x,y,k,v, v_end, chan)
+    function encod = subpatchesEncode(x,y,k,v, k_end, chan)
        encod1 = reshape(encImg(x, y, chan, :, v), [length(chan), numBins]);
-       if(v<v_end)
+       if(k<k_end)
            switch method
                case 'disk'
-                   encod2 = subpatchesEncode(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, 4*v-2, v_end, chan);
-                   encod3 = subpatchesEncode(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, 4*v-1, v_end, chan);
-                   encod4 = subpatchesEncode(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, 4*v, v_end, chan);
-                   encod5 = subpatchesEncode(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, 4*v+1, v_end, chan);
+                   encod2 = subpatchesEncode(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, 4*v-2, k_end, chan);
+                   encod3 = subpatchesEncode(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, 4*v-1, k_end, chan);
+                   encod4 = subpatchesEncode(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, 4*v, k_end, chan);
+                   encod5 = subpatchesEncode(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, 4*v+1, k_end, chan);
                case 'square'
-                   encod2 = subpatchesEncode(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end, chan);
-                   encod3 = subpatchesEncode(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, v_end, chan);
-                   encod4 = subpatchesEncode(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end, chan);
-                   encod5 = subpatchesEncode(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, v_end, chan);  
+                   encod2 = subpatchesEncode(x - ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, k_end, chan);
+                   encod3 = subpatchesEncode(x - ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, k_end, chan);
+                   encod4 = subpatchesEncode(x + ceil(r/(2*k)),y - ceil(r/(2*k)), 2*k, v+1, k_end, chan);
+                   encod5 = subpatchesEncode(x + ceil(r/(2*k)),y + ceil(r/(2*k)), 2*k, v+1, k_end, chan);  
            end
            encod = [encod1; encod2; encod3; encod4; encod5];
        else
@@ -401,7 +402,7 @@ showHomogeneityHeatmap();
         for i = r+1:W-r-1
             for j =r+1:H-r-1    
             %%patchEncode = subpatchesEncode(j, i, 3);
-            patchEncode = subpatchesEncode3(j,i,1,1,3);
+            patchEncode = subpatchesEncode(j, i, 1, 1, 4, 1:4);
             dist = histogramDistance(encRefPatch, patchEncode, 'chi2');
             %SimMap(j, i) = (1 - (w1*dist(1:4) + w2*dist(5:20) + w3*dist(21:84)));
             SimMap(j, i) = (1 - (w1*dist(1:4) + w2*dist([5:8 25:28 45:48 65:68]) + w3*dist([9:24 29:44 49:64 69:84])));
@@ -436,7 +437,7 @@ showHomogeneityHeatmap();
             hom = sum(0.25*reshape(hom, [4, 4]));
             switch method
                 case 'disk'
-                patchEncodeDiag = subpatchesEncodeDiag(j, i, 1, 6, 7, 1:4);
+                patchEncodeDiag = subpatchesEncodeDiag(j, i, 1, 22, 23, 1:4);
                 h1Diag = repmat(patchEncodeDiag(1:4,:),4, 1);
                 homDiag = histogramDistance(h1Diag, patchEncodeDiag(5:20, :), 'chi2');
                 homDiag = sum(0.25*reshape(homDiag, [4, 4]));
@@ -466,7 +467,7 @@ showHomogeneityHeatmap();
                 %DsubTex{i} = ones(2*ceil(r/kk));
                end
             case 'disk'
-                Dsub = cell(10,1);
+                Dsub = cell(26,1);
                 %Dsubdiag = cell(5, 1);
                 %DsubTex = cell(5,1);
                 Dsub{1}=disk(r);
@@ -475,11 +476,15 @@ showHomogeneityHeatmap();
                 Dsub{4}=disk(r, 'quadrant2');
                 Dsub{5}=disk(r, 'quadrant1');
                 
-                Dsub{6}=disk(r);
-                Dsub{7}=imrotate(Dsub{2}, 45);
-                Dsub{8}=imrotate(Dsub{3}, 45);
-                Dsub{9}=imrotate(Dsub{4}, 45);
-                Dsub{10}=imrotate(Dsub{5}, 45);
+                for i = 2:5
+                    Dsub{1+ 4*(i-1) + 1} = Dsub{i}(floor(r/2):r, floor(r/2):r);
+                    Dsub{1+ 4*(i-1) + 2} = Dsub{i}(floor(r/2):r, 1:ceil(r/2));
+                    Dsub{1+ 4*(i-1) + 3} = Dsub{i}(1:ceil(r/2), floor(r/2):r);
+                    Dsub{1+ 4*(i-1) + 4} = Dsub{i}(1:ceil(r/2), 1:ceil(r/2));
+                    Dsub{21+i}=imrotate(Dsub{i}, 45);
+                end
+                Dsub{22}=disk(r);
+
 %                 DsubTex{1}=disk(4*r/4);
 %                 DsubTex{2}=disk(4*r/4, 'quadrant4');
 %                 DsubTex{3}=disk(4*r/4, 'quadrant3');
