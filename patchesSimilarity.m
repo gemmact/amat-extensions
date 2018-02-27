@@ -422,7 +422,9 @@ showHomogeneityHeatmap();
                 h1Diag = repmat(patchEncodeDiag(1:4,:),4, 1);
                 homDiag = histogramDistance(h1Diag, patchEncodeDiag(5:20, :), 'chi2');
                 homDiag = sum(0.25*reshape(homDiag, [4, 4]));
-                homTot = [(hom+homDiag)/2 , (hom+[homDiag(2) homDiag(4) homDiag(1) homDiag(3)])/2];
+                %homTot = [(hom+homDiag)/2 , (hom+[homDiag(2) homDiag(4) homDiag(1) homDiag(3)])/2];
+                homAux = [homDiag(2) homDiag(4) homDiag(1) homDiag(3)];
+                homTot = [max(hom, homDiag), max(hom, homAux)];
                 case 'square'
                 homTot = hom;
             end
@@ -468,21 +470,23 @@ showHomogeneityHeatmap();
                 Dsub{3}=disk(r, 'quadrant3');
                 Dsub{4}=disk(r, 'quadrant2');
                 Dsub{5}=disk(r, 'quadrant1');
-                
+                U = triu(Dsub{1});
+                L = imrotate(U, 90);
+                T = L.*U;
+                T = T(1:(r+1), :);
                 for i = 2:5
                     Dsub{1+ 4*(i-1) + 1} = Dsub{i}(floor(r/2):r, floor(r/2):r);
                     Dsub{1+ 4*(i-1) + 2} = Dsub{i}(floor(r/2):r, 1:ceil(r/2));
                     Dsub{1+ 4*(i-1) + 3} = Dsub{i}(1:ceil(r/2), floor(r/2):r);
                     Dsub{1+ 4*(i-1) + 4} = Dsub{i}(1:ceil(r/2), 1:ceil(r/2));
-                    Dsub{21+i}=imrotate(Dsub{i}, 45);
+                    %Dsub{21+i}=imrotate(T, -90*i);
                 end
                 Dsub{22}=disk(r);
+                Dsub{23} = imrotate(T, -90);
+                Dsub{24} = imrotate(T, 180);
+                Dsub{25} = T;
+                Dsub{26} = imrotate(T, 90);
 
-%                 DsubTex{1}=disk(4*r/4);
-%                 DsubTex{2}=disk(4*r/4, 'quadrant4');
-%                 DsubTex{3}=disk(4*r/4, 'quadrant3');
-%                 DsubTex{4}=disk(4*r/4, 'quadrant2');
-%                 DsubTex{5}=disk(4*r/4, 'quadrant1');
             otherwise
                 error('Method not supported')
         end
@@ -492,7 +496,6 @@ showHomogeneityHeatmap();
        imgSubpatch = cat(3, binImage(reshape(imgLab, [H,W,C]), numBins), imgTexture);
        size(Dsub)
        enc = imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins);
-       size(enc)
        %enc = cat(3, imageEncoding(imgSubpatch, Dsub, 'hist-normalized', numBins),imageEncoding(imgSubpatch, Dsubdiag, 'hist-normalized', numBins));
     end
 
