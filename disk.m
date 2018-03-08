@@ -43,9 +43,6 @@ switch method
         [x,y] = meshgrid(-r:r, -r:r);
         d = x.^2 + y.^2 <= r^2;
         d = d(r+1:end,r+1:end);
-    case 'eigth1'
-        
-        
     otherwise
         error('Method not supported')
 end

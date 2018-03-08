@@ -20,7 +20,7 @@ function fh = patchesSimilarity(imgRGB, method)
 if nargin < 2, method = 'disk'; end
 
 % Default parameters
-r = 15;
+r = 20;
 numBins = 32; % used for histogram encodings
 methods.error    = {'se','mse','nmse','rse','rmse','nrmse','dssim'};
 methods.encoding = {'average','hist-smirnov','hist-expectation','hist-mode'};
@@ -48,7 +48,7 @@ figure(5); imagesc(imgTexture); axis off image;
 %tmap    = reshape(tmap,H*W,[]);
 imgRGB  = reshape(imgRGB, [], C);
 imgLab  = rgb2labNormalized(imgRGB);
-imgLabMatrix = reshape(imgLab, [H,W,C]);
+%imgLabMatrix = reshape(imgLab, [H,W,C]);
 refPatch= zeros(2*r+1);
 refxy   = [];
 encPatch = zeros((C+1)*(1 + r + 1 + (r + 1)/4), numBins);
@@ -351,15 +351,15 @@ showHomogeneityHeatmap();
        end
     end
 
-    function encod = subpatchesEncodeDiag(x,y,k,v, v_end, chan)
+    function encod = subpatchesEncodeDiag(x,y,k,v, v_end, chan, i)
        encod1 = reshape(encImg(x, y, chan, :, v), [length(chan), numBins]);
        if(v<v_end)
            switch method
                case 'disk'
-                   encod2 = subpatchesEncodeDiag(x,y - ceil(r/(2*k)), 2*k, v+1, v_end, chan);
-                   encod3 = subpatchesEncodeDiag(x - ceil(r/(2*k)),y, 2*k, v+2, v_end, chan);
-                   encod4 = subpatchesEncodeDiag(x + ceil(r/(2*k)),y, 2*k, v+3, v_end, chan);
-                   encod5 = subpatchesEncodeDiag(x,y + ceil(r/(2*k)), 2*k, v+4, v_end, chan); 
+                   encod2 = subpatchesEncodeDiag(x + i*ceil(r/(4*k)),y - ceil(r/(2*k)), 2*k, v+1, v_end, chan, i);
+                   encod3 = subpatchesEncodeDiag(x - ceil(r/(2*k)),y - i*ceil(r/(4*k)), 2*k, v+2, v_end, chan, i);
+                   encod4 = subpatchesEncodeDiag(x + ceil(r/(2*k)),y + i*ceil(r/(4*k)), 2*k, v+3, v_end, chan, i);
+                   encod5 = subpatchesEncodeDiag(x - i*ceil(r/(4*k)),y + ceil(r/(2*k)), 2*k, v+4, v_end, chan, i); 
            end
            encod = [encod1; encod2; encod3; encod4; encod5];
        else
@@ -418,13 +418,23 @@ showHomogeneityHeatmap();
             hom = sum(0.25*reshape(hom, [4, 4]));
             switch method
                 case 'disk'
-                patchEncodeDiag = subpatchesEncodeDiag(j, i, 1, 22, 23, 1:4);
-                h1Diag = repmat(patchEncodeDiag(1:4,:),4, 1);
-                homDiag = histogramDistance(h1Diag, patchEncodeDiag(5:20, :), 'chi2');
-                homDiag = sum(0.25*reshape(homDiag, [4, 4]));
-                %homTot = [(hom+homDiag)/2 , (hom+[homDiag(2) homDiag(4) homDiag(1) homDiag(3)])/2];
-                homAux = [homDiag(2) homDiag(4) homDiag(1) homDiag(3)];
-                homTot = [max(hom, homDiag), max(hom, homAux)];
+                for k = -1:1   
+                    patchEncodeDiag = subpatchesEncodeDiag(j, i, 1, 22 + (k+1)*5, 23 + (k+1)*5, 1:4, k);
+                    h1Diag = repmat(patchEncodeDiag(1:4,:),4, 1);
+                    homDiag = histogramDistance(h1Diag, patchEncodeDiag(5:20, :), 'chi2');
+                    homDiag = sum(0.25*reshape(homDiag, [4, 4]));
+                    %homTot = [(hom+homDiag)/2 , (hom+[homDiag(2) homDiag(4) homDiag(1) homDiag(3)])/2];
+                    homAux = [homDiag(2) homDiag(4) homDiag(1) homDiag(3)];
+                    homTot = [max(hom(1:4), homDiag), max(hom(1:4), homAux)];
+                    l = length(hom);
+                    if (l > 4)
+                        for t = 2:(l/4)
+                        homTot = [homTot, max(hom(4*(t-1)+1:4*t), homAux)];
+                        end
+                    end
+                    hom = homTot;
+                end
+                
                 case 'square'
                 homTot = hom;
             end
@@ -462,7 +472,7 @@ showHomogeneityHeatmap();
                 %DsubTex{i} = ones(2*ceil(r/kk));
                end
             case 'disk'
-                Dsub = cell(26,1);
+                Dsub = cell(36,1);
                 %Dsubdiag = cell(5, 1);
                 %DsubTex = cell(5,1);
                 Dsub{1}=disk(r);
@@ -470,10 +480,6 @@ showHomogeneityHeatmap();
                 Dsub{3}=disk(r, 'quadrant3');
                 Dsub{4}=disk(r, 'quadrant2');
                 Dsub{5}=disk(r, 'quadrant1');
-                U = triu(Dsub{1});
-                L = imrotate(U, 90);
-                T = L.*U;
-                T = T(1:(r+1), :);
                 for i = 2:5
                     Dsub{1+ 4*(i-1) + 1} = Dsub{i}(floor(r/2):r, floor(r/2):r);
                     Dsub{1+ 4*(i-1) + 2} = Dsub{i}(floor(r/2):r, 1:ceil(r/2));
@@ -481,11 +487,23 @@ showHomogeneityHeatmap();
                     Dsub{1+ 4*(i-1) + 4} = Dsub{i}(1:ceil(r/2), 1:ceil(r/2));
                     %Dsub{21+i}=imrotate(T, -90*i);
                 end
-                Dsub{22}=disk(r);
-                Dsub{23} = imrotate(T, -90);
-                Dsub{24} = imrotate(T, 180);
-                Dsub{25} = T;
-                Dsub{26} = imrotate(T, 90);
+                
+                for i = 1:3
+                    %U = triu(imrotate(Dsub{1}, (i-2)*22.5));
+                    U = triu(Dsub{1});
+                    L = imrotate(U, 90);
+                    T = L.*U;
+                    T = imrotate(T, (i-2)*22.5);
+                    [A,B] = size(T);
+                    T = T(1:ceil(A/2), :);
+                    
+                    Dsub{22 + (i-1)*5}=disk(r);
+                    Dsub{23 + (i-1)*5} = imrotate(T, 270);
+                    Dsub{24 + (i-1)*5} = imrotate(T, 180);
+                    Dsub{25 + (i-1)*5} = T;
+                    Dsub{26 + (i-1)*5} = imrotate(T, 90);
+                end
+                
 
             otherwise
                 error('Method not supported')
